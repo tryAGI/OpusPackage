@@ -17,6 +17,10 @@ The package exposes:
 
 ## Rebuilding Opus.xcframework
 
+Use the manual **Release XCFramework** GitHub Actions workflow for normal binary
+refreshes. It rebuilds `vendor/Opus.xcframework`, zips the framework as the
+archive root, computes the SwiftPM checksum, and publishes the release asset.
+
 The vendored source and build script are kept under `third_party/opus/`.
 
 ```bash
@@ -26,6 +30,6 @@ bash third_party/opus/build-opus.sh
 Release artifacts must be zipped with the XCFramework directory as the archive root:
 
 ```bash
-ditto -c -k --sequesterRsrc --keepParent Opus.xcframework Opus.xcframework.zip
+ditto -c -k --sequesterRsrc --keepParent vendor/Opus.xcframework Opus.xcframework.zip
 swift package compute-checksum Opus.xcframework.zip
 ```
