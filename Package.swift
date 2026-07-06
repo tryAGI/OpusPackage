@@ -5,7 +5,7 @@ let package = Package(
     name: "OpusPackage",
     platforms: [
         .iOS("26.1"),
-        .watchOS("26.1"),
+        .watchOS("26.0"),
         .macOS("26.1"),
     ],
     products: [
