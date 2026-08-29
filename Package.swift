@@ -15,8 +15,8 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "Opus",
-            url: "https://github.com/tryAGI/OpusPackage/releases/download/v0.1.0/Opus.xcframework.zip",
-            checksum: "f9e2edcfa3bc223de244d917ae96812879ad47ef05e8a37f31c11f11097d22e6"
+            url: "https://github.com/tryAGI/OpusPackage/releases/download/v0.1.2/Opus.xcframework.zip",
+            checksum: "786b148365058fe0f07da92a69d679e1ed0afa0fc12e4ac0b3993a9f8c65adc8"
         ),
         // pure Swift types/helpers
         .target(name: "OpusTypes"),
@@ -38,7 +38,7 @@ let package = Package(
         // ✅ iOS unit tests (run via Xcode/xcodebuild on iOS Simulator)
         .testTarget(
             name: "OpusPackageTests",
-            dependencies: ["Opus", "OpusShims", "OpusKit"],
+            dependencies: ["OpusShims", "OpusKit"],
             resources: [.process("Resources")]
         ),
     ]

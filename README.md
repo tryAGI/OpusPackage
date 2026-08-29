@@ -12,7 +12,7 @@ The package exposes:
 ## Usage
 
 ```swift
-.package(url: "https://github.com/tryAGI/OpusPackage", exact: "0.1.0")
+.package(url: "https://github.com/tryAGI/OpusPackage", exact: "0.1.2")
 ```
 
 ## Rebuilding Opus.xcframework
@@ -22,6 +22,9 @@ refreshes. It rebuilds `vendor/Opus.xcframework`, zips the framework as the
 archive root, computes the SwiftPM checksum, and publishes the release asset.
 
 The vendored source and build script are kept under `third_party/opus/`.
+The binary XCFramework intentionally contains public headers without a generic
+`module.modulemap`; `OpusShims` owns the Clang module boundary. This lets Xcode
+link Opus alongside other static XCFrameworks that expose their own module map.
 
 ```bash
 bash third_party/opus/build-opus.sh

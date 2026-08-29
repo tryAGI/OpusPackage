@@ -1,4 +1,4 @@
-import Opus // for OPUS_APPLICATION_* C constants
+import OpusShims // for OPUS_APPLICATION_* C constants
 
 // Always use english in comments
 import OpusKit

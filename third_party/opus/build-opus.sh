@@ -41,17 +41,12 @@ echo "▶ iOS min: $IOS_MIN | watchOS min: $WOS_MIN"
 rm -rf "$BUILD_DIR" "$DIST_DIR" "$HEADERS_DIR"
 mkdir -p "$BUILD_DIR" "$DIST_DIR" "$HEADERS_DIR" "$OUT_DIR"
 
-# Copy public headers and add module map for Swift import
+# Copy public headers only. OpusShims is the package's Clang module boundary and
+# imports these headers while linking this binary target. Keeping a generic
+# Headers/module.modulemap in a static XCFramework makes Xcode copy it to the
+# shared BuildProductsPath/include/module.modulemap location; any second static
+# XCFramework with a module map then fails with "Multiple commands produce".
 cp -R "$OPUS_SRC_DIR/include/"* "$HEADERS_DIR/"
-cat > "$HEADERS_DIR/module.modulemap" <<'MMAP'
-module Opus [system] {
-  header "opus.h"
-  header "opus_types.h"
-  header "opus_defines.h"
-  header "opus_multistream.h"
-  export *
-}
-MMAP
 
 build_one () {
   local PLATFORM="$1"      # iphoneos | iphonesimulator | watchos | watchsimulator
@@ -200,6 +195,11 @@ xcodebuild -create-xcframework \
   -library "$DIST_DIR/tvos/libopus.a"                -headers "$HEADERS_DIR" \
   -library "$DIST_DIR/tvos-sim-universal/libopus.a"  -headers "$HEADERS_DIR" \
   -output "$OUT_XC"
+
+if [[ -n "$(find "$OUT_XC" -name module.modulemap -print -quit)" ]]; then
+  echo "❌ Opus.xcframework must not publish a generic module.modulemap" >&2
+  exit 1
+fi
 
 echo "✅ Built $OUT_XC"
 echo "   You can now link vendor/Opus.xcframework to your iOS and watchOS targets (Do Not Embed for static)."

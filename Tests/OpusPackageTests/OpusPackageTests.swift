@@ -1,4 +1,3 @@
-import Opus
 import OpusShims
 import XCTest
 

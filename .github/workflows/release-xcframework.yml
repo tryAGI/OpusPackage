@@ -47,6 +47,10 @@ jobs:
             echo "Missing $framework_path" >&2
             exit 1
           fi
+          if [[ -n "$(find "$framework_path" -name module.modulemap -print -quit)" ]]; then
+            echo "Opus.xcframework must rely on OpusShims and must not publish a generic module.modulemap" >&2
+            exit 1
+          fi
 
           rm -rf artifacts
           mkdir -p artifacts
