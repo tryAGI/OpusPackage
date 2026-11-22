@@ -1,0 +1,20 @@
+name: Swift package tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  swift:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print Swift toolchain
+        run: swift --version
+      - name: Test OpusKit
+        run: swift test --parallel

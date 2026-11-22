@@ -171,6 +171,116 @@ public extension Opus {
             }
         }
 
+        /// Decode PCM16 directly into independently owned Data without an intermediate Int16 array.
+        /// The Data can be reused across calls; shared storage is copied on write before decoding.
+        /// - Returns: Decoded frames per channel. The output is trimmed to the exact PCM byte count.
+        public func decodePCM16(
+            data: Data,
+            fec: Bool = false,
+            expected: FrameDuration = .ms20,
+            into output: inout Data
+        ) throws -> Int {
+            guard !data.isEmpty, data.count <= Int(Int32.max) else {
+                throw Error.badArgument
+            }
+
+            return try data.withUnsafeBytes { raw in
+                let packet = raw.bindMemory(to: UInt8.self)
+                return try decodePCM16(
+                    packet: packet.baseAddress,
+                    packetLen: Int32(packet.count),
+                    fec: fec,
+                    expected: expected,
+                    into: &output
+                )
+            }
+        }
+
+        /// Decode PCM16 into already allocated, aligned sample storage.
+        /// The caller owns the memory and must keep it alive for the duration of this call.
+        /// - Returns: Decoded frames per channel; output capacity is expressed in interleaved samples.
+        public func decodePCM16(
+            packet: UnsafePointer<UInt8>?,
+            packetLen: Int32,
+            fec: Bool = false,
+            expected: FrameDuration = .ms20,
+            into output: UnsafeMutableBufferPointer<opus_int16>
+        ) throws -> Int {
+            let frames = Int(sampleRate.frameSize(expected))
+            let channelsCount = Int(channels.rawValue)
+            guard frames > 0,
+                  packetLen >= 0,
+                  (packetLen == 0 || packet != nil),
+                  output.count >= frames * channelsCount,
+                  let destination = output.baseAddress
+            else {
+                throw Error.badArgument
+            }
+
+            let decodedFrames = opus_decode(
+                decoder, packet, packetLen, destination, Int32(frames), fec ? 1 : 0
+            )
+            guard decodedFrames >= 0 else {
+                throw Error.decodingError(
+                    decodedFrames,
+                    context: "Int16 decode failed - packet: \(packetLen) bytes, expected: \(expected.ms)ms, fec: \(fec)"
+                )
+            }
+            return Int(decodedFrames)
+        }
+
+        /// Packet Loss Concealment directly into owned PCM bytes.
+        /// - Returns: Generated frames per channel.
+        public func concealPCM16(
+            expected: FrameDuration = .ms20,
+            into output: inout Data
+        ) throws -> Int {
+            try decodePCM16(
+                packet: nil,
+                packetLen: 0,
+                fec: false,
+                expected: expected,
+                into: &output
+            )
+        }
+
+        private func decodePCM16(
+            packet: UnsafePointer<UInt8>?,
+            packetLen: Int32,
+            fec: Bool,
+            expected: FrameDuration,
+            into output: inout Data
+        ) throws -> Int {
+            let frameCapacity = Int(sampleRate.frameSize(expected))
+            let byteCapacity = frameCapacity * Int(channels.rawValue) * MemoryLayout<opus_int16>.stride
+            guard frameCapacity > 0 else { throw Error.badArgument }
+
+            // All mutable access stays within Data's exclusive borrow. No native pointer escapes.
+            output.count = byteCapacity
+            do {
+                let decodedFrames = try output.withUnsafeMutableBytes { raw -> Int in
+                    guard let base = raw.baseAddress,
+                          Int(bitPattern: base) % MemoryLayout<opus_int16>.alignment == 0
+                    else {
+                        throw Error.badArgument
+                    }
+                    let samples = raw.bindMemory(to: opus_int16.self)
+                    return try decodePCM16(
+                        packet: packet,
+                        packetLen: packetLen,
+                        fec: fec,
+                        expected: expected,
+                        into: samples
+                    )
+                }
+                output.count = decodedFrames * Int(channels.rawValue) * MemoryLayout<opus_int16>.stride
+                return decodedFrames
+            } catch {
+                output.removeAll(keepingCapacity: true)
+                throw error
+            }
+        }
+
         /// Packet Loss Concealment - generate replacement audio for lost packet
         public func concealPCM16(expected: FrameDuration = .ms20) throws -> [opus_int16] {
             try decodePCM16(packet: nil, packetLen: 0, fec: false, expected: expected)

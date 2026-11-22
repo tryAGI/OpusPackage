@@ -13,6 +13,7 @@ let package = Package(
         .library(name: "OpusKit", targets: ["OpusKit"]),
     ],
     targets: [
+        // The native binary stays pinned while Swift-only OpusKit APIs evolve.
         .binaryTarget(
             name: "Opus",
             url: "https://github.com/tryAGI/OpusPackage/releases/download/v0.1.2/Opus.xcframework.zip",

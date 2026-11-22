@@ -12,8 +12,26 @@ The package exposes:
 ## Usage
 
 ```swift
-.package(url: "https://github.com/tryAGI/OpusPackage", exact: "0.1.2")
+.package(url: "https://github.com/tryAGI/OpusPackage", exact: "0.1.3")
 ```
+
+## Owned PCM decode output
+
+`Opus.Decoder.decodePCM16(data:expected:into:)` decodes directly into a
+caller-owned `Data` buffer without an intermediate PCM array. The returned
+integer is the frame count per channel, and `Data.count` is trimmed to the
+exact interleaved PCM16 byte length. A retained copy of the output stays
+independent of subsequent decode calls through Data's copy-on-write storage.
+
+`decodePCM16(data:fec:expected:into:)` also supports FEC recovery;
+`concealPCM16(expected:into:)` generates PLC into the same owned output.
+For preallocated native sample storage, use the overload accepting
+`UnsafeMutableBufferPointer<opus_int16>`, whose length is checked before
+calling libopus. Decoder instances remain stateful and must not be used
+concurrently.
+
+Version 0.1.3 adds Swift-only APIs and continues using the unchanged, checksum-
+pinned v0.1.2 native XCFramework. No native binary rebuild is needed.
 
 ## Rebuilding Opus.xcframework
 
