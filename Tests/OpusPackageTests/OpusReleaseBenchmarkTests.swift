@@ -43,14 +43,14 @@ final class OpusReleaseBenchmarkTests: XCTestCase {
         let buildConfiguration = "release"
         let cpuClock = "thread_cpu_time"
         let signal = "synthetic_voice_like_with_silence"
-        let sampleRate = OpusReleaseBenchmarkTests.sampleRate
+        let sampleRate: Int
         let channels = 1
         let bitrate = 64_000
         let constrainedVBR = true
         let fecEnabled = false
         let dtxEnabled = true
-        let packetCount = OpusReleaseBenchmarkTests.iterations
-        let repetitions = OpusReleaseBenchmarkTests.repetitions
+        let packetCount: Int
+        let repetitions: Int
         let inputFingerprintFNV1a64: String
         let observations: [Observation]
     }
@@ -157,6 +157,9 @@ final class OpusReleaseBenchmarkTests: XCTestCase {
         }
 
         let report = Report(
+            sampleRate: Self.sampleRate,
+            packetCount: Self.iterations,
+            repetitions: Self.repetitions,
             inputFingerprintFNV1a64: String(inputFingerprint, radix: 16),
             observations: observations
         )
